@@ -1,5 +1,6 @@
 import uuid
 
+import pytest
 import requests
 
 from config import API_BASE_URL
@@ -16,6 +17,18 @@ def test_get_contact_with_valid_token_accepted(auth_headers):
     body = response.json()
     assert "contacts" in body
     assert isinstance(body["contacts"], list)
+
+@pytest.mark.parametrize("authorization",
+                         [
+                         pytest.param("Bearer asd123", id="garbage_token"),
+                         pytest.param("Bearer ", id="empty token"),
+                         pytest.param("Basic asd123", id="wrong_scheme")
+                         ]
+                         )
+def test_get_contact_with_malformed_token_rejected(authorization):
+    response = requests.get(f"{API_BASE_URL}v1/contacts", headers={"Authorization": authorization})
+    assert response.status_code == 401
+
 
 def test_add_contact_success(auth_headers):
     new_contact = {
